@@ -4,7 +4,13 @@ name: Render Amazon Review Video
 # Khi xong (~6-10 phút), vào lần chạy đó -> "Artifacts" ở cuối trang -> tải về.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      amazon_url:
+        description: "Amazon product URL (để tải ảnh bìa thật)"
+        required: false
+        default: "https://www.amazon.com/Simple-Christian-Devotional-Relaxation-Reflections/dp/B0F7FBZNMZ"
+        type: string
 
 jobs:
   render:
@@ -46,6 +52,33 @@ jobs:
 
       - name: Measure real narration lengths and sync timeline
         run: python3 scripts/build_timing.py
+
+      - name: Fetch real product cover image from Amazon
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          URL="${{ github.event.inputs.amazon_url }}"
+          echo "Fetching product page: $URL"
+          curl -sL -A "$UA" -H "Accept-Language: en-US,en;q=0.9" "$URL" -o product_page.html || true
+
+          IMG_URL=""
+          if [ -s product_page.html ]; then
+            IMG_URL=$(grep -oP '(?<=property="og:image" content=")[^"]+' product_page.html | head -1)
+          fi
+
+          if [ -n "$IMG_URL" ]; then
+            echo "Found image URL: $IMG_URL"
+            curl -sL -A "$UA" "$IMG_URL" -o assets/cover.jpg || true
+          fi
+
+          # Dự phòng: nếu Amazon chặn request hoặc không tìm thấy ảnh,
+          # tự sinh 1 khối màu brand để composition không bị vỡ layout.
+          if [ ! -s assets/cover.jpg ]; then
+            echo "Could not fetch real image -- generating brand-color fallback."
+            ffmpeg -f lavfi -i color=c=0x4A1F42:s=900x900 -frames:v 1 -y assets/cover.jpg
+            echo "::warning::Could not fetch the real Amazon product image (likely blocked by Amazon). Video uses a brand-color placeholder instead."
+          else
+            echo "Real product image fetched successfully."
+          fi
 
       - name: Lint composition
         run: npx hyperframes lint
