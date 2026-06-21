@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* Using system serif stack (Georgia/Times) instead of Google Fonts —
+         external font requests are not reliable inside the renderer's
+         isolated capture context. To use the real brand fonts (Cormorant
+         Garamond / Playfair Display) later, download the .woff2 files into
+         capture/assets/fonts/ and add @font-face rules pointing to them. */
+      :root {
+        --cream: #faf6ee;
+        --ink: #2b2420;
+        --ink-faint: #6b5f54;
+        --plum: #4a1f42;
+        --plum-dark: #371531;
+        --gold: #c8a656;
+        --white: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ink);
+      }
+      body {
+        font-family: Georgia, 'Times New Roman', serif;
+      }
+
+      /* ---- Scenes (full-bleed, sequential, track 0) ---- */
+      .scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1920px;
+        height: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      /* Scene 1 — brand intro */
+      #scene-1 {
+        background: var(--cream);
+      }
+      #eyebrow-1 {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 30px;
+        letter-spacing: 0.32em;
+        color: var(--gold);
+        text-transform: uppercase;
+        margin-bottom: 28px;
+      }
+      #rule-1 {
+        width: 140px;
+        height: 2px;
+        background: var(--gold);
+        margin-bottom: 28px;
+        transform-origin: center;
+      }
+      #tagline-1 {
+        font-style: italic;
+        font-weight: 500;
+        font-size: 42px;
+        color: var(--ink-faint);
+      }
+
+      /* Scene 2 — top pick highlight */
+      #scene-2 {
+        background: var(--plum);
+        padding: 0 220px;
+      }
+      #badge-2 {
+        background: var(--gold);
+        color: var(--plum-dark);
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 14px 36px;
+        border-radius: 999px;
+        margin-bottom: 44px;
+      }
+      #title-2 {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-weight: 700;
+        font-size: 84px;
+        line-height: 1.18;
+        color: var(--white);
+        margin-bottom: 36px;
+      }
+      #stars-2 {
+        font-size: 48px;
+        letter-spacing: 10px;
+        color: var(--gold);
+        margin-bottom: 30px;
+      }
+      #sub-2 {
+        font-style: italic;
+        font-size: 34px;
+        color: #e9dcef;
+      }
+
+      /* Scene 3 — outro / CTA */
+      #scene-3 {
+        background: var(--cream);
+      }
+      #cta-3 {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-weight: 700;
+        font-size: 56px;
+        color: var(--ink);
+        margin-bottom: 30px;
+      }
+      #bell-3 {
+        width: 64px;
+        height: 64px;
+        border: 3px solid var(--gold);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        color: var(--gold);
+        margin-bottom: 24px;
+      }
+      #sub-3 {
+        font-size: 32px;
+        color: var(--ink-faint);
+        margin-bottom: 36px;
+      }
+      #tagline-3 {
+        font-style: italic;
+        font-weight: 500;
+        font-size: 34px;
+        color: var(--gold);
+      }
+
+      /* ---- Persistent FTC disclosure bar (track 1, overlays every scene) ---- */
+      #footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1920px;
+        padding: 18px 0;
+        background: rgba(20, 16, 14, 0.78);
+        color: var(--white);
+        font-family: Arial, sans-serif;
+        font-size: 20px;
+        letter-spacing: 0.02em;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="promo"
+      data-start="0"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- Scene 1: Brand intro (0s - 4s) -->
+      <div id="scene-1" class="scene clip" data-start="0" data-duration="4" data-track-index="0">
+        <div id="eyebrow-1">Path of the Heart</div>
+        <div id="rule-1"></div>
+        <div id="tagline-1">Be Still. Pray with Purpose.</div>
+      </div>
+
+      <!-- Scene 2: Top pick highlight (4s - 9s) -->
+      <div id="scene-2" class="scene clip" data-start="4" data-duration="5" data-track-index="0">
+        <div id="badge-2">Today's Top Pick</div>
+        <div id="title-2">5 Best Christian<br />Coloring Books for Kids</div>
+        <div id="stars-2">★★★★★</div>
+        <div id="sub-2">Check today's price on Amazon — link below</div>
+      </div>
+
+      <!-- Scene 3: Outro / CTA (9s - 12s) -->
+      <div id="scene-3" class="scene clip" data-start="9" data-duration="3" data-track-index="0">
+        <div id="cta-3">Watch the full review ↓</div>
+        <div id="bell-3">🔔</div>
+        <div id="sub-3">Subscribe for more faith-based picks</div>
+        <div id="tagline-3">Be Still. Pray with Purpose.</div>
+      </div>
+
+      <!-- Persistent FTC disclosure (0s - 12s, separate track so it overlays every scene) -->
+      <div id="footer" class="clip" data-start="0" data-duration="12" data-track-index="1">
+        As an Amazon Associate, Path of the Heart earns from qualifying purchases.
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Footer disclosure fades in immediately
+      tl.from("#footer", { opacity: 0, duration: 0.4 }, 0.2);
+
+      // Scene 1 — brand intro
+      tl.from("#eyebrow-1", { opacity: 0, y: 20, duration: 0.6 }, 0.1);
+      tl.from("#rule-1", { scaleX: 0, duration: 0.5 }, 0.45);
+      tl.from("#tagline-1", { opacity: 0, y: 14, duration: 0.6 }, 0.75);
+
+      // Scene 2 — top pick (hard cut at 4s, so animate relative to 4s)
+      tl.from("#badge-2", { opacity: 0, x: -50, duration: 0.5 }, 4.1);
+      tl.from("#title-2", { opacity: 0, y: 34, duration: 0.7 }, 4.4);
+      tl.from("#stars-2", { opacity: 0, scale: 0.85, duration: 0.5 }, 5.1);
+      tl.from("#sub-2", { opacity: 0, y: 12, duration: 0.5 }, 5.4);
+
+      // Scene 3 — outro / CTA (hard cut at 9s)
+      tl.from("#cta-3", { opacity: 0, y: 20, duration: 0.6 }, 9.1);
+      tl.from("#bell-3", { opacity: 0, scale: 0.6, duration: 0.5 }, 9.55);
+      tl.from("#sub-3", { opacity: 0, duration: 0.5 }, 9.85);
+      tl.from("#tagline-3", { opacity: 0, duration: 0.6 }, 10.3);
+
+      // Lock total composition duration to 12s
+      tl.set({}, {}, 12);
+
+      window.__timelines["promo"] = tl;
+    </script>
+  </body>
+</html>
