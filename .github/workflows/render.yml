@@ -1,0 +1,72 @@
+name: Render Amazon Review Video
+
+# Bấm "Run workflow" trong tab Actions để chạy.
+# Khi xong (~6-10 phút), vào lần chạy đó -> "Artifacts" ở cuối trang -> tải về.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install hyperframes CLI
+        run: npm install hyperframes --no-save --ignore-scripts
+
+      - name: Install local TTS engine (Kokoro)
+        run: pip install kokoro-onnx soundfile --break-system-packages
+
+      - name: Download headless Chrome for rendering
+        run: npx hyperframes browser ensure
+
+      - name: Generate narration audio (voice 1/4 - hook + intro + FTC)
+        run: npx hyperframes tts assets/narration-1.txt -o assets/voice-1.wav -v af_heart
+
+      - name: Generate narration audio (voice 2/4 - what we liked)
+        run: npx hyperframes tts assets/narration-2.txt -o assets/voice-2.wav -v af_heart
+
+      - name: Generate narration audio (voice 3/4 - honest caveat)
+        run: npx hyperframes tts assets/narration-3.txt -o assets/voice-3.wav -v af_heart
+
+      - name: Generate narration audio (voice 4/4 - CTA)
+        run: npx hyperframes tts assets/narration-4.txt -o assets/voice-4.wav -v af_heart
+
+      - name: Measure real narration lengths and sync timeline
+        run: python3 scripts/build_timing.py
+
+      - name: Lint composition
+        run: npx hyperframes lint
+
+      - name: Render to MP4
+        run: npx hyperframes render -o output.mp4
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: amazon-review-video
+          path: output.mp4
+          retention-days: 14
+
+      - name: Upload narration audio (for reference / re-use)
+        uses: actions/upload-artifact@v4
+        with:
+          name: narration-audio
+          path: assets/voice-*.wav
+          retention-days: 14
