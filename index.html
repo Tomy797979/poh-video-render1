@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* System serif stack on purpose — external font requests are not
+         reliable inside the renderer's isolated capture context. */
+      :root {
+        --cream: #faf6ee;
+        --ink: #2b2420;
+        --ink-faint: #6b5f54;
+        --plum: #4a1f42;
+        --plum-dark: #371531;
+        --gold: #c8a656;
+        --white: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1920px;
+        height: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      /* ---- Scene 1: brand intro + product card (image + text) ---- */
+      #scene-1 {
+        background: var(--cream);
+      }
+      #card-1 {
+        display: flex;
+        align-items: center;
+        gap: 96px;
+      }
+      #cover-wrap-1 {
+        width: 480px;
+        height: 480px;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(43, 36, 32, 0.22);
+        flex: 0 0 auto;
+        background: var(--plum);
+      }
+      #cover-wrap-1 img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #text-1 {
+        text-align: left;
+        max-width: 760px;
+      }
+      #eyebrow-1 {
+        font-size: 28px;
+        letter-spacing: 0.32em;
+        color: var(--gold);
+        text-transform: uppercase;
+        margin-bottom: 30px;
+      }
+      #pname-1 {
+        font-weight: 700;
+        font-size: 92px;
+        line-height: 1.05;
+        color: var(--ink);
+        margin-bottom: 22px;
+      }
+      #psub-1 {
+        font-style: italic;
+        font-size: 34px;
+        color: var(--ink-faint);
+        margin-bottom: 44px;
+      }
+      #chips-1 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .chip {
+        background: var(--plum);
+        color: var(--white);
+        font-size: 24px;
+        padding: 14px 28px;
+        border-radius: 999px;
+        letter-spacing: 0.02em;
+      }
+
+      /* ---- Scene 2: gallery "A Peek Inside" (real sample-page images) ---- */
+      #scene-2 {
+        background: var(--cream);
+      }
+      #gallery-heading-2 {
+        font-size: 30px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 50px;
+      }
+      .gallery-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 50px;
+      }
+      .gallery-card {
+        width: 440px;
+        height: 440px;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 26px 54px rgba(43, 36, 32, 0.2);
+        background: var(--plum);
+        flex: 0 0 auto;
+      }
+      .gallery-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gallery-card.middle {
+        width: 480px;
+        height: 480px;
+        margin-top: -24px;
+        box-shadow: 0 32px 64px rgba(43, 36, 32, 0.26);
+      }
+      #gallery-caption-2 {
+        margin-top: 44px;
+        font-style: italic;
+        font-size: 30px;
+        color: var(--ink-faint);
+      }
+
+      /* ---- Scene 3: what we liked ---- */
+      #scene-3 {
+        background: var(--plum);
+      }
+      #liked-heading-3 {
+        font-size: 30px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 56px;
+      }
+      .liked-row {
+        display: flex;
+        align-items: center;
+        gap: 36px;
+        width: 1180px;
+        text-align: left;
+        margin-bottom: 44px;
+      }
+      .liked-dot {
+        flex: 0 0 auto;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--gold);
+        color: var(--plum-dark);
+        font-weight: 700;
+        font-size: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .liked-title {
+        font-weight: 700;
+        font-size: 46px;
+        color: var(--white);
+        margin-bottom: 4px;
+      }
+      .liked-sub {
+        font-style: italic;
+        font-size: 28px;
+        color: #e9dcef;
+      }
+
+      /* ---- Scene 4: honest caveat / who it's for ---- */
+      #scene-4 {
+        background: var(--cream);
+        padding: 0 280px;
+      }
+      #caveat-heading-4 {
+        font-size: 28px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 36px;
+      }
+      #caveat-body-4 {
+        font-size: 44px;
+        line-height: 1.5;
+        color: var(--ink);
+        margin-bottom: 36px;
+      }
+      #caveat-sub-4 {
+        font-style: italic;
+        font-size: 32px;
+        color: var(--ink-faint);
+      }
+
+      /* ---- Scene 5: CTA ---- */
+      #scene-5 {
+        background: var(--plum);
+      }
+      #cta-5 {
+        font-weight: 700;
+        font-size: 64px;
+        color: var(--white);
+        margin-bottom: 30px;
+      }
+      #bell-5 {
+        width: 70px;
+        height: 70px;
+        border: 3px solid var(--gold);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: var(--gold);
+        margin-bottom: 26px;
+      }
+      #sub-5 {
+        font-size: 32px;
+        color: #e9dcef;
+        margin-bottom: 38px;
+      }
+      #tagline-5 {
+        font-style: italic;
+        font-size: 36px;
+        color: var(--gold);
+      }
+
+      /* ---- Persistent FTC disclosure bar ---- */
+      #footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 1920px;
+        padding: 18px 0;
+        background: rgba(20, 16, 14, 0.78);
+        color: var(--white);
+        font-family: Arial, sans-serif;
+        font-size: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage" data-composition-id="amazon-review-1" data-start="0" data-width="1920" data-height="1080">
+      <!-- ===== Narration audio track (track 2), 1 file đã gộp sẵn từ 26 chunk ngắn ===== -->
+      <audio id="narration" data-start="0" data-duration="__TOTAL__" data-track-index="2" src="narration-full.wav"></audio>
+
+      <!-- ===== Visual scenes (track 0), each duration = matching voice clip's real length ===== -->
+      <div id="scene-1" class="scene clip" data-start="0" data-duration="__D1__" data-track-index="0">
+        <div id="card-1">
+          <div id="cover-wrap-1">
+            <img src="assets/cover.jpg" alt="Simple Christian coloring book cover" />
+          </div>
+          <div id="text-1">
+            <div id="eyebrow-1">Path of the Heart</div>
+            <div id="pname-1">Simple Christian</div>
+            <div id="psub-1">Coloring Book Devotional &middot; The Happi Pabi</div>
+            <div id="chips-1">
+              <div class="chip">94 Pages</div>
+              <div class="chip">45 Designs</div>
+              <div class="chip">A Verse on Every Page</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-2" class="scene clip" data-start="scene-1" data-duration="__D2__" data-track-index="0">
+        <div id="gallery-heading-2">A Peek Inside</div>
+        <div class="gallery-row">
+          <div class="gallery-card" id="gal-1">
+            <img src="assets/sample1.jpg" alt="Sample coloring page 1" />
+          </div>
+          <div class="gallery-card middle" id="gal-2">
+            <img src="assets/sample2.jpg" alt="Sample coloring page 2" />
+          </div>
+          <div class="gallery-card" id="gal-3">
+            <img src="assets/sample3.jpg" alt="Sample coloring page 3" />
+          </div>
+        </div>
+        <div id="gallery-caption-2">Bold, simple designs &middot; ready for little hands</div>
+      </div>
+
+      <div id="scene-3" class="scene clip" data-start="scene-2" data-duration="__D3__" data-track-index="0">
+        <div id="liked-heading-3">What We Liked</div>
+        <div class="liked-row" id="liked-1">
+          <div class="liked-dot">1</div>
+          <div>
+            <div class="liked-title">Single-sided pages</div>
+            <div class="liked-sub">No bleed-through with markers</div>
+          </div>
+        </div>
+        <div class="liked-row" id="liked-2">
+          <div class="liked-dot">2</div>
+          <div>
+            <div class="liked-title">Bold, simple line work</div>
+            <div class="liked-sub">Designed so kids actually finish</div>
+          </div>
+        </div>
+        <div class="liked-row" id="liked-3">
+          <div class="liked-dot">3</div>
+          <div>
+            <div class="liked-title">A verse on every page</div>
+            <div class="liked-sub">Coloring time becomes quiet time</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-4" class="scene clip" data-start="scene-3" data-duration="__D4__" data-track-index="0">
+        <div id="caveat-heading-4">Good to Know</div>
+        <div id="caveat-body-4">
+          Designs are kept simple on purpose &mdash; great for younger kids and tweens,<br />
+          less suited for adult colorists wanting intricate detail.
+        </div>
+        <div id="caveat-sub-4">Best for: ages 4&ndash;12 &middot; family devotional time</div>
+      </div>
+
+      <div id="scene-5" class="scene clip" data-start="scene-4" data-duration="__D5__" data-track-index="0">
+        <div id="cta-5">Check Today's Price on Amazon</div>
+        <div id="bell-5">&#128276;</div>
+        <div id="sub-5">Subscribe for more faith-based picks</div>
+        <div id="tagline-5">Be Still. Pray with Purpose.</div>
+      </div>
+
+      <!-- ===== Persistent FTC disclosure, spans the whole video (track 1) ===== -->
+      <div id="footer" class="clip" data-start="0" data-duration="__TOTAL__" data-track-index="1">
+        As an Amazon Associate, Path of the Heart earns from qualifying purchases.
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Real measured narration durations (substituted at render time)
+      const D1 = __D1__;
+      const D2 = __D2__;
+      const D3 = __D3__;
+      const D4 = __D4__;
+      const D5 = __D5__;
+      const S1 = 0;
+      const S2 = S1 + D1;
+      const S3 = S2 + D2;
+      const S4 = S3 + D3;
+      const S5 = S4 + D4;
+      const TOTAL = S5 + D5;
+
+      // Footer disclosure fades in immediately, stays for the whole video
+      tl.from("#footer", { opacity: 0, duration: 0.4 }, 0.2);
+
+      // Scene 1 — brand intro + product card
+      tl.from("#cover-wrap-1", { opacity: 0, x: -40, duration: 0.7 }, S1 + 0.1);
+      tl.from("#eyebrow-1", { opacity: 0, y: 20, duration: 0.6 }, S1 + 0.45);
+      tl.from("#pname-1", { opacity: 0, y: 34, duration: 0.7 }, S1 + 0.75);
+      tl.from("#psub-1", { opacity: 0, y: 14, duration: 0.6 }, S1 + 1.25);
+      tl.from("#chips-1 .chip", { opacity: 0, y: 16, duration: 0.5, stagger: 0.18 }, S1 + 1.65);
+
+      // Scene 2 — gallery "A Peek Inside" (3 sample-page images, staggered pop-in)
+      tl.from("#gallery-heading-2", { opacity: 0, y: 16, duration: 0.5 }, S2 + 0.15);
+      tl.from("#gal-1", { opacity: 0, y: 30, scale: 0.92, duration: 0.6 }, S2 + 0.45);
+      tl.from("#gal-2", { opacity: 0, y: 30, scale: 0.92, duration: 0.6 }, S2 + 0.65);
+      tl.from("#gal-3", { opacity: 0, y: 30, scale: 0.92, duration: 0.6 }, S2 + 0.85);
+      tl.from("#gallery-caption-2", { opacity: 0, duration: 0.5 }, S2 + 1.3);
+
+      // Scene 3 — what we liked (3 points staggered across the segment)
+      tl.from("#liked-heading-3", { opacity: 0, y: 16, duration: 0.5 }, S3 + 0.2);
+      tl.from("#liked-1", { opacity: 0, x: -40, duration: 0.55 }, S3 + 0.55);
+      tl.from("#liked-2", { opacity: 0, x: -40, duration: 0.55 }, S3 + Math.max(1.2, D3 * 0.38));
+      tl.from("#liked-3", { opacity: 0, x: -40, duration: 0.55 }, S3 + Math.max(2.2, D3 * 0.68));
+
+      // Scene 4 — honest caveat / who it's for
+      tl.from("#caveat-heading-4", { opacity: 0, y: 16, duration: 0.5 }, S4 + 0.2);
+      tl.from("#caveat-body-4", { opacity: 0, y: 18, duration: 0.6 }, S4 + 0.55);
+      tl.from("#caveat-sub-4", { opacity: 0, duration: 0.5 }, S4 + 1.15);
+
+      // Scene 5 — CTA
+      tl.from("#cta-5", { opacity: 0, y: 20, duration: 0.6 }, S5 + 0.2);
+      tl.from("#bell-5", { opacity: 0, scale: 0.6, duration: 0.5 }, S5 + 0.6);
+      tl.from("#sub-5", { opacity: 0, duration: 0.5 }, S5 + 0.9);
+      tl.from("#tagline-5", { opacity: 0, duration: 0.6 }, S5 + 1.3);
+
+      // Lock total composition duration to the real measured narration length
+      tl.set({}, {}, TOTAL);
+
+      window.__timelines["amazon-review-1"] = tl;
+    </script>
+  </body>
+</html>
