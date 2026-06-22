@@ -1,89 +1,105 @@
 #!/usr/bin/env python3
 """
-Đo độ dài thật của 26 file audio ngắn (đã sinh bằng `hyperframes tts`,
-mỗi file là 1 câu/cụm ngắn để né giới hạn cắt-cụt-văn-bản-dài của Kokoro),
-gộp lại theo 5 nhóm tương ứng 5 cảnh, rồi thay placeholder __D1__..__D5__
-và __TOTAL__ trong index.html bằng số thật.
-Chạy SAU bước TTS, TRƯỚC bước lint/render trong workflow.
+Đo thời lượng 26 chunks, gộp theo 5 cảnh, rồi inject cả timing lẫn
+product metadata (từ narrations/<PRODUCT_NAME>/meta.json) vào index.html.
 """
-import json
-import subprocess
-import sys
+import json, os, subprocess, sys
 
-# Số file audio thuộc mỗi cảnh, theo đúng thứ tự narration-01..26.
-# Scene 1 (hook+intro+FTC) = 7, Scene 2 (gallery "A Peek Inside") = 2,
-# Scene 3 (what we liked) = 8, Scene 4 (caveat) = 5, Scene 5 (CTA) = 4.
-# Tổng = 26.
-SCENE_CHUNK_COUNTS = [7, 2, 8, 5, 4]
-
+SCENE_CHUNK_COUNTS = [7, 2, 8, 5, 4]  # tổng = 26
 TOTAL_CHUNKS = sum(SCENE_CHUNK_COUNTS)
-AUDIO_FILES = [f"voice-{i:02d}.wav" for i in range(1, TOTAL_CHUNKS + 1)]
-AUDIO_FILES_TXT = [f"assets/narration-{i:02d}.txt" for i in range(1, TOTAL_CHUNKS + 1)]
 
+# ── Đọc metadata sản phẩm ────────────────────────────────────────────────────
+PRODUCT_NAME = os.environ.get("PRODUCT_NAME", "")
+meta_path = f"narrations/{PRODUCT_NAME}/meta.json" if PRODUCT_NAME else ""
 
-def ffprobe_duration(path: str) -> float:
+DEFAULT_META = {
+    "product_name": "Product Review",
+    "product_sub":  "Path of the Heart",
+    "chips":        ["See Description", "Amazon Pick", "Faith-Based"],
+    "liked": [
+        {"title": "Feature 1", "sub": "Why it matters"},
+        {"title": "Feature 2", "sub": "Why it matters"},
+        {"title": "Feature 3", "sub": "Why it matters"},
+    ],
+    "caveat_body": "Check the listing for full details before purchasing.",
+    "caveat_sub":  "Link in description below",
+}
+
+if meta_path and os.path.exists(meta_path):
+    with open(meta_path, encoding="utf-8") as f:
+        meta = json.load(f)
+    print(f"Loaded meta: {meta_path}")
+else:
+    meta = DEFAULT_META
+    print(f"No meta.json found for '{PRODUCT_NAME}' — using defaults.")
+
+# ── Đo thời lượng audio ──────────────────────────────────────────────────────
+def ffprobe_duration(path):
     out = subprocess.run(
-        [
-            "ffprobe",
-            "-v", "quiet",
-            "-show_entries", "format=duration",
-            "-of", "json",
-            path,
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    data = json.loads(out.stdout)
-    return float(data["format"]["duration"])
+        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+         "-of", "json", path],
+        capture_output=True, text=True, check=True)
+    return float(json.loads(out.stdout)["format"]["duration"])
 
+audio_files = [f"voice-{i:02d}.wav" for i in range(1, TOTAL_CHUNKS + 1)]
+chunk_durations = [ffprobe_duration(p) for p in audio_files]
 
-def main() -> None:
-    chunk_durations = [ffprobe_duration(p) for p in AUDIO_FILES]
+print(f"\nChunk durations:")
+for i, d in enumerate(chunk_durations, 1):
+    print(f"  voice-{i:02d}.wav → {d:.2f}s")
 
-    print("Measured chunk durations (seconds):")
-    for i, d in enumerate(chunk_durations, start=1):
-        words = len(open(AUDIO_FILES_TXT[i - 1], encoding="utf-8").read().split())
-        sec_per_word = d / words if words else 0
-        flag = "  <-- looks too short for word count" if sec_per_word < 0.15 else ""
-        print(f"  voice-{i:02d}.wav -> {d:.2f}s ({words} words){flag}")
+scene_durations = []
+idx = 0
+for count in SCENE_CHUNK_COUNTS:
+    scene_durations.append(sum(chunk_durations[idx:idx+count]))
+    idx += count
 
-    # Gộp theo nhóm cảnh
-    scene_durations = []
-    idx = 0
-    for count in SCENE_CHUNK_COUNTS:
-        group = chunk_durations[idx: idx + count]
-        scene_durations.append(sum(group))
-        idx += count
+total = sum(scene_durations)
+print(f"\nScene durations: {[f'{d:.2f}s' for d in scene_durations]}")
+print(f"TOTAL: {total:.2f}s")
 
-    total = sum(scene_durations)
+# ── Đọc, inject, ghi index.html ──────────────────────────────────────────────
+with open("index.html", encoding="utf-8") as f:
+    html = f.read()
 
-    print("\nScene durations (seconds):")
-    for i, d in enumerate(scene_durations, start=1):
-        print(f"  Scene {i} -> {d:.2f}s")
-    print(f"  TOTAL -> {total:.2f}s")
+# Inject timing
+for i, d in enumerate(scene_durations, 1):
+    html = html.replace(f"__D{i}__", f"{d:.3f}")
+html = html.replace("__TOTAL__", f"{total:.3f}")
 
-    with open("index.html", "r", encoding="utf-8") as f:
-        html = f.read()
+# Inject product metadata
+chips = meta.get("chips", DEFAULT_META["chips"])
+liked = meta.get("liked", DEFAULT_META["liked"])
 
-    for i, d in enumerate(scene_durations, start=1):
-        token = f"__D{i}__"
-        if token not in html:
-            print(f"ERROR: token {token} not found in index.html", file=sys.stderr)
-            sys.exit(1)
-        html = html.replace(token, f"{d:.3f}")
+replacements = {
+    "__PNAME__":       meta.get("product_name", DEFAULT_META["product_name"]),
+    "__PSUB__":        meta.get("product_sub",  DEFAULT_META["product_sub"]),
+    "__CHIP1__":       chips[0] if len(chips) > 0 else "",
+    "__CHIP2__":       chips[1] if len(chips) > 1 else "",
+    "__CHIP3__":       chips[2] if len(chips) > 2 else "",
+    "__LIKED1_TITLE__": liked[0]["title"] if len(liked) > 0 else "",
+    "__LIKED1_SUB__":   liked[0]["sub"]   if len(liked) > 0 else "",
+    "__LIKED2_TITLE__": liked[1]["title"] if len(liked) > 1 else "",
+    "__LIKED2_SUB__":   liked[1]["sub"]   if len(liked) > 1 else "",
+    "__LIKED3_TITLE__": liked[2]["title"] if len(liked) > 2 else "",
+    "__LIKED3_SUB__":   liked[2]["sub"]   if len(liked) > 2 else "",
+    "__CAVEAT_BODY__":  meta.get("caveat_body", DEFAULT_META["caveat_body"]),
+    "__CAVEAT_SUB__":   meta.get("caveat_sub",  DEFAULT_META["caveat_sub"]),
+}
 
-    if "__TOTAL__" not in html:
-        print("ERROR: token __TOTAL__ not found in index.html", file=sys.stderr)
-        sys.exit(1)
-    html = html.replace("__TOTAL__", f"{total:.3f}")
+for token, value in replacements.items():
+    if token not in html:
+        print(f"WARNING: token {token} not found in index.html", file=sys.stderr)
+    html = html.replace(token, value)
 
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
+# Kiểm tra không còn placeholder nào sót
+remaining = [t for t in list(replacements.keys()) + [f"__D{i}__" for i in range(1,6)] + ["__TOTAL__"]
+             if t in html]
+if remaining:
+    print(f"ERROR: Unresolved placeholders: {remaining}", file=sys.stderr)
+    sys.exit(1)
 
-    print("\nindex.html updated with real durations.")
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html)
 
-
-if __name__ == "__main__":
-    main()
-
+print(f"\nindex.html updated — product: {meta.get('product_name')}")
