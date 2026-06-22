@@ -1,20 +1,28 @@
 name: Batch Render — Multiple Products
 
-# Dán danh sách link Amazon (mỗi dòng 1 sản phẩm) → tất cả render song song.
-# Kết quả: toàn bộ video tự upload vào Dropbox cùng lúc.
-#
-# Định dạng input (mỗi dòng):
-#   https://amazon.com/dp/B0XXXXXXX | tên-file-dropbox
-#   https://amazon.com/dp/B0YYYYYYY          <- tên file tự sinh từ ASIN
-#   # dòng bắt đầu bằng # sẽ bị bỏ qua
-
 on:
   workflow_dispatch:
     inputs:
-      products:
-        description: "Danh sách sản phẩm — mỗi dòng 1 link (tuỳ chọn: link | tên-file)"
+      product_1:
+        description: "Sản phẩm 1 — link | tên-file"
         required: true
-        
+        type: string
+      product_2:
+        description: "Sản phẩm 2 — link | tên-file (để trống nếu không có)"
+        required: false
+        type: string
+      product_3:
+        description: "Sản phẩm 3 — link | tên-file (để trống nếu không có)"
+        required: false
+        type: string
+      product_4:
+        description: "Sản phẩm 4 — link | tên-file (để trống nếu không có)"
+        required: false
+        type: string
+      product_5:
+        description: "Sản phẩm 5 — link | tên-file (để trống nếu không có)"
+        required: false
+        type: string
       ai_provider:
         description: "AI provider để viết narration"
         required: false
@@ -39,7 +47,11 @@ jobs:
       - name: Parse product list into matrix
         id: parse
         env:
-          PRODUCTS: ${{ github.event.inputs.products }}
+          PRODUCT_1: ${{ github.event.inputs.product_1 }}
+          PRODUCT_2: ${{ github.event.inputs.product_2 }}
+          PRODUCT_3: ${{ github.event.inputs.product_3 }}
+          PRODUCT_4: ${{ github.event.inputs.product_4 }}
+          PRODUCT_5: ${{ github.event.inputs.product_5 }}
         run: python3 scripts/parse_products.py
 
       - name: Print summary
@@ -91,10 +103,10 @@ jobs:
           DEEPSEEK_API_KEY:  ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           NARR_DIR="narrations/${PRODUCT_NAME}"
-          if [ -d "$NARR_DIR" ] && [ $(ls "$NARR_DIR"/narration-*.txt 2>/dev/null | wc -l) -eq 26 ]; then
+          COUNT=$(ls "$NARR_DIR"/narration-*.txt 2>/dev/null | wc -l)
+          if [ -d "$NARR_DIR" ] && [ "$COUNT" -eq 26 ]; then
             echo "Found pre-written narration for '$PRODUCT_NAME' — dùng luôn, không gọi AI."
             cp "$NARR_DIR"/narration-*.txt assets/
-            echo "=== Narration loaded ==="
             for f in assets/narration-*.txt; do echo "$(basename $f): $(cat $f)"; done
           else
             echo "Không có narration sẵn cho '$PRODUCT_NAME' — gọi AI để viết..."
@@ -121,8 +133,8 @@ jobs:
 
       - name: Fetch product images (Dropbox first, then fallback)
         env:
-          DROPBOX_APP_KEY:      ${{ secrets.DROPBOX_APP_KEY }}
-          DROPBOX_APP_SECRET:   ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_APP_KEY:       ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET:    ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -161,14 +173,19 @@ jobs:
           dbx_dl "${PATH_ARRAY[0]:-}" assets/cover.jpg && echo "Cover: Dropbox OK" || {
             IMG=$(curl -sL -A "$UA" -H "Accept-Language: en-US,en;q=0.9" "$PRODUCT_URL" | grep -oP '(?<=property="og:image" content=")[^"]+' | head -1)
             [ -n "$IMG" ] && curl -sL -A "$UA" "$IMG" -o assets/cover.jpg || true
-            [ -s assets/cover.jpg ] && echo "Cover: scrape OK" || { ffmpeg -f lavfi -i color=c=0x4A1F42:s=900x900 -frames:v 1 -y assets/cover.jpg; echo "::warning::Cover fallback for $PRODUCT_NAME"; }
+            [ -s assets/cover.jpg ] && echo "Cover: scrape OK" || {
+              ffmpeg -f lavfi -i color=c=0x4A1F42:s=900x900 -frames:v 1 -y assets/cover.jpg
+              echo "::warning::Cover fallback for $PRODUCT_NAME"
+            }
           }
 
           COLORS=("0xC8A656" "0x6B5F54" "0x371531")
           for i in 0 1 2; do
             n=$((i+1))
-            dbx_dl "${PATH_ARRAY[$((i+1))]:-}" "assets/sample${n}.jpg" && echo "Sample $n: OK" || \
-              { ffmpeg -f lavfi -i color=c=${COLORS[$i]}:s=900x900 -frames:v 1 -y "assets/sample${n}.jpg"; echo "Sample $n: fallback"; }
+            dbx_dl "${PATH_ARRAY[$((i+1))]:-}" "assets/sample${n}.jpg" && echo "Sample $n: OK" || {
+              ffmpeg -f lavfi -i color=c=${COLORS[$i]}:s=900x900 -frames:v 1 -y "assets/sample${n}.jpg"
+              echo "Sample $n: fallback"
+            }
           done
 
       - name: Lint composition
@@ -179,8 +196,8 @@ jobs:
 
       - name: Upload to Dropbox
         env:
-          DROPBOX_APP_KEY:      ${{ secrets.DROPBOX_APP_KEY }}
-          DROPBOX_APP_SECRET:   ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_APP_KEY:       ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET:    ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
         run: |
           [ -z "$DROPBOX_APP_KEY" ] && echo "::warning::Thiếu Dropbox Secrets" && exit 0
