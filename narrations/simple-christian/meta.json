@@ -1,0 +1,12 @@
+{
+  "product_name": "Simple Christian",
+  "product_sub": "Coloring Book Devotional \u00b7 The Happi Pabi",
+  "chips": ["94 Pages", "45 Designs", "A Verse on Every Page"],
+  "liked": [
+    {"title": "Single-sided pages",      "sub": "No bleed-through with markers"},
+    {"title": "Bold, simple line work",  "sub": "Designed so kids actually finish"},
+    {"title": "A verse on every page",   "sub": "Coloring time becomes quiet time"}
+  ],
+  "caveat_body": "Designs are kept simple on purpose \u2014 great for younger kids and tweens, less suited for adult colorists wanting intricate detail.",
+  "caveat_sub": "Best for: ages 4\u201312 \u00b7 family devotional time"
+}
