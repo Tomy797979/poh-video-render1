@@ -1,0 +1,12 @@
+{
+  "product_name": "Bible Coloring Book",
+  "product_sub": "With Stickers \u00b7 Little Sunbeams",
+  "chips": ["128 Pages", "50+ Stickers", "Perforated Pages"],
+  "liked": [
+    {"title": "Pages tear out cleanly",   "sub": "Goes straight from book to fridge"},
+    {"title": "50+ Bible stickers",       "sub": "An activity, not just coloring"},
+    {"title": "Full Bible story range",   "sub": "Noah, Daniel, Jesus, Easter \u2014 all year"}
+  ],
+  "caveat_body": "More activity-focused than devotional \u2014 no scripture verse printed on each page. Great for fun Bible-themed coloring, less for verse-by-verse study.",
+  "caveat_sub": "Best for: ages 3\u20138 \u00b7 Sunday school \u00b7 home activity time"
+}
